@@ -1,23 +1,14 @@
-# Güvenlik (ÇOK ÖNEMLİ: API anahtarının internete sızmasını engeller)
 .env
-
-# Veritabanı (Sürekli değişen önbellek dosyasının GitHub'ı kirletmesini engeller)
 *.db
 *.sqlite3
 lol_cache.db
-
-# Python Sanal Ortamları (Virtual Environments)
 venv/
 .venv/
 env/
-
-# Python Önbellek (Cache) Dosyaları
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# İşletim Sistemi ve Editör Dosyaları (Mac veya VS Code kullananlar için)
 .DS_Store
 .vscode/
 .idea/
