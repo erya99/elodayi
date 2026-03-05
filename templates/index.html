@@ -28,7 +28,18 @@
         .oyuncu-isim { font-size: 1.05em; color: #ffffff; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
         .sampiyon-isim { font-size: 0.95em; color: #b0b8c1; font-weight: 500; margin-bottom: 3px; letter-spacing: 0.5px;}
 
-        /* --- İŞTE BURASI: ARAMA KUTUSU YAZISINI DAHA BELİRGİN VE SİLİK BEYAZ YAPAN KOD --- */
+        /* Ustalık Rozeti CSS'i */
+        .mastery-badge {
+            font-size: 0.75em;
+            background-color: rgba(241, 196, 15, 0.15);
+            color: #f1c40f;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(241, 196, 15, 0.4);
+            margin-left: 6px;
+            font-weight: 600;
+        }
+
         .arama-kutusu::placeholder {
             color: #b0b8c1 !important; 
             opacity: 0.6 !important;
@@ -112,7 +123,10 @@
                     </div>
                     <div class="ms-2">
                         <div class="oyuncu-isim">{{ oyuncu.isim }}</div>
-                        <div class="sampiyon-isim">{{ oyuncu.sampiyon }}</div>
+                        <div class="sampiyon-isim d-flex align-items-center">
+                            {{ oyuncu.sampiyon }} 
+                            <span class="mastery-badge">⭐ {{ oyuncu.mastery }}</span>
+                        </div>
                         <div class="d-flex align-items-center mt-1">
                             {% if oyuncu.rank.icon %}
                             <img src="{{ oyuncu.rank.icon }}" alt="{{ oyuncu.rank.color_class }}" class="rank-icon me-1">
@@ -150,7 +164,10 @@
                     </div>
                     <div class="ms-2">
                         <div class="oyuncu-isim">{{ oyuncu.isim }}</div>
-                        <div class="sampiyon-isim">{{ oyuncu.sampiyon }}</div>
+                        <div class="sampiyon-isim d-flex align-items-center">
+                            {{ oyuncu.sampiyon }} 
+                            <span class="mastery-badge">⭐ {{ oyuncu.mastery }}</span>
+                        </div>
                         <div class="d-flex align-items-center mt-1">
                             {% if oyuncu.rank.icon %}
                             <img src="{{ oyuncu.rank.icon }}" alt="{{ oyuncu.rank.color_class }}" class="rank-icon me-1">

@@ -11,6 +11,7 @@ API_KEY = "RGAPI-c70b1245-4eb5-4e51-8316-f2240ef81835"
 CACHE_TTL_PUUID = 30 * 24 * 60 * 60 
 CACHE_TTL_RANK = 15 * 60            
 CACHE_TTL_MATCH = 2 * 60 
+CACHE_TTL_MASTERY = 24 * 60 * 60 # Ustalık puanları günde 1 kez güncellensin
 
 QUEUE_MAP = {
     420: "Dereceli (Tek/Çift)",
@@ -34,6 +35,7 @@ def init_db():
         c.execute("CREATE TABLE IF NOT EXISTS riot_id_cache (puuid TEXT PRIMARY KEY, riot_id TEXT, timestamp REAL)")
         c.execute("CREATE TABLE IF NOT EXISTS rank_cache (puuid TEXT PRIMARY KEY, rank_data TEXT, timestamp REAL)")
         c.execute("CREATE TABLE IF NOT EXISTS match_cache (puuid TEXT PRIMARY KEY, match_data TEXT, timestamp REAL)")
+        c.execute("CREATE TABLE IF NOT EXISTS mastery_cache (puuid_champ TEXT PRIMARY KEY, points TEXT, timestamp REAL)")
         conn.commit()
 
 init_db()
@@ -161,6 +163,38 @@ def get_rank_info(puuid, api_key, force=False):
         return rank_data
     return {"text": "Hata", "color_class": "unranked", "icon": ""}
 
+def get_mastery_info(puuid, champ_id, api_key):
+    if not puuid or not champ_id: return "0 Ustalık Puanı"
+    
+    db_key = f"{puuid}_{champ_id}"
+    with sqlite3.connect("lol_cache.db") as conn:
+        c = conn.cursor()
+        c.execute("SELECT points, timestamp FROM mastery_cache WHERE puuid_champ=?", (db_key,))
+        row = c.fetchone()
+        if row and (time.time() - row[1]) < CACHE_TTL_MASTERY:
+            return row[0]
+            
+    url = f"https://tr1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}/by-champion/{champ_id}"
+    headers = {"X-Riot-Token": api_key}
+    response = requests.get(url, headers=headers)
+    
+    pts_text = "0 Ustalık Puanı"
+    if response.status_code == 200:
+        pts = response.json().get('championPoints', 0)
+        if pts >= 1000000:
+            pts_text = f"{pts/1000000:.1f}M Ustalık Puanı"
+        elif pts >= 1000:
+            pts_text = f"{int(pts/1000)}K Ustalık Puanı"
+        else:
+            pts_text = f"{pts} Ustalık Puanı"
+            
+        with sqlite3.connect("lol_cache.db") as conn:
+            c = conn.cursor()
+            c.execute("REPLACE INTO mastery_cache (puuid_champ, points, timestamp) VALUES (?, ?, ?)", (db_key, pts_text, time.time()))
+            conn.commit()
+            
+    return pts_text
+
 def get_live_match_data(puuid, api_key, force_update=False):
     cooldown_warning = False
 
@@ -209,8 +243,9 @@ def get_live_match_data(puuid, api_key, force_update=False):
         for p in data.get('participants', []):
             p_puuid = p.get('puuid')
             team_id = p.get('teamId')
+            champ_id = p.get('championId')
             
-            c_info = CHAMPS.get(p.get('championId'), {'name': 'Bilinmeyen', 'icon': ''})
+            c_info = CHAMPS.get(champ_id, {'name': 'Bilinmeyen', 'icon': ''})
             s1_id = p.get('spell1Id')
             s2_id = p.get('spell2Id')
             
@@ -227,7 +262,8 @@ def get_live_match_data(puuid, api_key, force_update=False):
                 "s2_id": s2_id,
                 "main_rune": RUNES.get(p_ids[0], '') if p_ids else '',
                 "sub_tree": TREES.get(perks.get('perkSubStyle'), ''),
-                "rank": get_rank_info(p_puuid, api_key, force=force_update) 
+                "rank": get_rank_info(p_puuid, api_key, force=force_update),
+                "mastery": get_mastery_info(p_puuid, champ_id, api_key) 
             }
             
             if team_id == 100:
@@ -235,12 +271,10 @@ def get_live_match_data(puuid, api_key, force_update=False):
             else:
                 match_info["red_team"].append(player_data)
             
-        # --- YENİ VE KUSURSUZ: KESİN SLOT DOLDURMA ALGORİTMASI ---
         def assign_roles(team):
             roles = {0: None, 1: None, 2: None, 3: None, 4: None}
             unassigned = []
             
-            # 1. Çarpı olanı direkt Jungle (1) yap
             for p in team:
                 if 11 in [p['s1_id'], p['s2_id']] and roles[1] is None:
                     roles[1] = p
@@ -248,7 +282,7 @@ def get_live_match_data(puuid, api_key, force_update=False):
                     unassigned.append(p)
                     
             def assign_if(role_id, condition):
-                for p in unassigned[:]: # Kopyası üzerinden dönüyoruz ki silerken hata olmasın
+                for p in unassigned[:]: 
                     if roles[role_id] is None and condition(p):
                         roles[role_id] = p
                         unassigned.remove(p)
@@ -258,25 +292,18 @@ def get_live_match_data(puuid, api_key, force_update=False):
             adc_list = ["Ashe", "Caitlyn", "Draven", "Ezreal", "Jhin", "Jinx", "Kai'Sa", "Kalista", "Kog'Maw", "Lucian", "Miss Fortune", "Nilah", "Samira", "Sivir", "Smolder", "Tristana", "Twitch", "Varus", "Vayne", "Xayah", "Zeri", "Aphelios"]
             sup_list = ["Lulu", "Karma", "Nami", "Janna", "Soraka", "Sona", "Thresh", "Nautilus", "Leona", "Rell", "Rakan", "Pyke", "Braum", "Taric", "Blitzcrank", "Alistar", "Renata Glasc", "Milio", "Yuumi", "Bard", "Senna", "Nautilus"]
             
-            # 2. Şampiyon isimlerine göre ADC ve SUP yerleştir
             assign_if(3, lambda p: p['sampiyon'] in adc_list)
             assign_if(4, lambda p: p['sampiyon'] in sup_list)
-            
-            # 3. Kalanlardan Işınlan alanları Top (0) yap
             assign_if(0, lambda p: 12 in [p['s1_id'], p['s2_id']])
-            
-            # 4. Hala yerleşmemişlerden Şifa alanları ADC, Bitkinlik alanları SUP yap
             assign_if(3, lambda p: 7 in [p['s1_id'], p['s2_id']])
             assign_if(4, lambda p: 3 in [p['s1_id'], p['s2_id']])
             
-            # 5. Kalan oyuncuları boş olan koltuklara sırayla oturt
             for i in range(5):
                 if roles[i] is None and unassigned:
                     roles[i] = unassigned.pop(0)
                     
             return [roles[i] for i in range(5) if roles[i] is not None]
 
-        # Her iki takımı da bu yeni algoritmadan geçiriyoruz
         match_info["blue_team"] = assign_roles(match_info["blue_team"])
         match_info["red_team"] = assign_roles(match_info["red_team"])
             
