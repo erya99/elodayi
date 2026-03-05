@@ -3,196 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elo Dayı - LoL Canlı Maç Sorgulama</title>
+    <title>Elo Dayı - Canlı Maç Sorgulama</title>
+    <link rel="icon" type="image/png" href="/static/icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #121212; color: #f0f0f0; display: flex; flex-direction: column; min-height: 100vh; }
-        .main-content { flex: 1; }
+        body { background-color: #121212; color: #f0f0f0; display: flex; flex-direction: column; min-height: 100vh; margin: 0; }
+        #bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(10, 10, 10, 0.4), rgba(15, 15, 15, 0.8)), url('/static/arkaplan.png') no-repeat center center; background-size: cover; z-index: -1; transition: opacity 0.8s ease, filter 0.8s ease; }
+        .bg-darken { opacity: 0.15; filter: blur(8px) grayscale(60%); }
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1;}
+        .landing-mode { justify-content: center; align-items: center; min-height: 75vh; }
+
+        .text-sweet-blue { color: #63b3ed !important; }
+        .border-sweet-blue { border-color: #63b3ed !important; }
+        .btn-sweet-blue { background-color: #63b3ed; color: #1a202c; border: none; transition: 0.3s ease; }
+        .btn-sweet-blue:hover { background-color: #4299e1; color: #ffffff; box-shadow: 0 4px 15px rgba(99, 179, 237, 0.4); }
+        .btn-outline-sweet-blue { border: 2px solid #63b3ed; color: #63b3ed; background: transparent; transition: 0.3s ease; }
+        .btn-outline-sweet-blue:hover { background-color: #63b3ed; color: #1a202c; box-shadow: 0 0 10px rgba(99, 179, 237, 0.5); }
+
+        .brand-logo { font-family: 'Fredoka', sans-serif; color: #63b3ed !important; text-decoration: none; transition: 0.3s ease-in-out; display: inline-block; }
+        .brand-logo:hover { color: #90cdf4 !important; text-shadow: 0 0 20px rgba(99, 179, 237, 0.8); transform: scale(1.03); }
+        .buyuk-baslik { font-size: 5.5rem; text-shadow: 0px 4px 20px rgba(0,0,0,0.9), 0 0 25px rgba(99, 179, 237, 0.4); margin-bottom: 30px; letter-spacing: 1px; }
+        .kucuk-baslik { font-size: 3rem; text-shadow: 0px 2px 10px rgba(0,0,0,0.8), 0 0 15px rgba(99, 179, 237, 0.3); margin-bottom: 1.5rem; }
+
+        .glass-panel { background: rgba(30, 30, 30, 0.6) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); }
+        .mavi-takim { background-color: rgba(22, 36, 54, 0.75); backdrop-filter: blur(8px); border-left: 5px solid #2980b9; border-top: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .kirmizi-takim { background-color: rgba(54, 22, 22, 0.75); backdrop-filter: blur(8px); border-left: 5px solid #c0392b; border-top: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); }
         
-        .mavi-takim { background-color: #162436; border-left: 5px solid #2980b9; }
-        .kirmizi-takim { background-color: #361616; border-left: 5px solid #c0392b; }
+        .oyuncu-kart { margin-bottom: 8px; padding: 10px 15px; border-radius: 8px; transition: 0.3s; }
+        .oyuncu-kart:hover { transform: translateX(5px) scale(1.01); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         
-        .oyuncu-kart { margin-bottom: 8px; padding: 10px 15px; border-radius: 6px; transition: 0.2s; border: 1px solid #2a2a2a; }
-        .oyuncu-kart:hover { transform: translateX(5px); background-color: #1e1e1e; }
-        
-        .champ-icon { width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #555; }
-        .spell-icon { width: 22px; height: 22px; border-radius: 3px; }
-        .rune-icon { width: 22px; height: 22px; background-color: #000; border-radius: 50%; padding: 2px; }
+        .champ-icon { width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); }
+        .spell-icon { width: 22px; height: 22px; border-radius: 4px; }
+        .rune-icon { width: 22px; height: 22px; background-color: rgba(0,0,0,0.5); border-radius: 50%; padding: 2px; }
         .rank-icon { width: 26px; height: 26px; object-fit: contain; }
         
         .ban-container { display: flex; align-items: center; }
-        .ban-icon { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid #e74c3c; margin-left: -8px; opacity: 0.8; transition: 0.2s; }
+        .ban-icon { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid #e74c3c; margin-left: -8px; opacity: 0.8; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
         .ban-icon:hover { opacity: 1; transform: scale(1.2); z-index: 10; }
-        .ban-text { font-size: 0.8em; color: #e74c3c; margin-right: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .ban-text { font-size: 0.8em; color: #ff6b6b; margin-right: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
 
         .oyuncu-isim { font-size: 1.05em; color: #ffffff; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
         .sampiyon-isim { font-size: 0.95em; color: #b0b8c1; font-weight: 500; margin-bottom: 3px; letter-spacing: 0.5px;}
 
-        /* Ustalık Rozeti CSS'i */
-        .mastery-badge {
-            font-size: 0.75em;
-            background-color: rgba(241, 196, 15, 0.15);
-            color: #f1c40f;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid rgba(241, 196, 15, 0.4);
-            margin-left: 6px;
-            font-weight: 600;
-        }
-
-        .arama-kutusu::placeholder {
-            color: #b0b8c1 !important; 
-            opacity: 0.6 !important;
-            font-style: italic;
-        }
-        
-        .rank-iron { color: #7f8c8d !important; }
-        .rank-bronze { color: #cd7f32 !important; }
-        .rank-silver { color: #bdc3c7 !important; }
-        .rank-gold { color: #f1c40f !important; text-shadow: 0 0 5px rgba(241,196,15,0.3); }
-        .rank-platinum { color: #1abc9c !important; }
-        .rank-emerald { color: #2ecc71 !important; text-shadow: 0 0 5px rgba(46,204,113,0.3); }
-        .rank-diamond { color: #3498db !important; }
-        .rank-master { color: #9b59b6 !important; }
-        .rank-grandmaster { color: #e74c3c !important; }
-        .rank-challenger { color: #f39c12 !important; }
-        .rank-unranked { color: #7f8c8d !important; font-style: italic; }
+        .mastery-badge { font-size: 0.75em; background-color: rgba(241, 196, 15, 0.15); color: #f1c40f; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(241, 196, 15, 0.4); margin-left: 6px; font-weight: 600; }
+        .arama-kutusu::placeholder { color: #b0b8c1 !important; opacity: 0.6 !important; font-style: italic; }
+        .arama-kutusu:focus { background-color: rgba(40, 40, 40, 0.8) !important; color: white !important; box-shadow: 0 0 15px rgba(99, 179, 237, 0.4) !important; border-color: #63b3ed !important;}
         .rank-text { font-size: 0.9em; font-weight: 600; }
 
-        footer { background-color: #0a0a0a; border-top: 1px solid #2a2a2a; }
+        .hot-streak { display: inline-block; font-size: 1.1em; margin-left: 5px; cursor: help; animation: burn 1.5s infinite alternate; }
+        @keyframes burn { 0% { transform: scale(1); filter: drop-shadow(0 0 2px red); } 100% { transform: scale(1.15); filter: drop-shadow(0 0 8px orange); } }
+
+        footer { background-color: rgba(10, 10, 10, 0.9); border-top: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 10; backdrop-filter: blur(5px);}
         .footer-link { color: #adb5bd; text-decoration: none; transition: color 0.2s; }
-        .footer-link:hover { color: #f1c40f; }
+        .footer-link:hover { color: #63b3ed; } 
+        @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: slideUpFade 0.6s ease-out forwards; }
     </style>
 </head>
 <body>
-    <div class="container mt-5 mb-5 main-content">
-        <h1 class="text-center mb-4 text-warning fw-bold">Elo Dayı</h1>
+    <div id="bg-layer" class="{% if match_data %}bg-darken{% endif %}"></div>
+
+    <div class="container main-content {% if not match_data %}landing-mode{% else %}mt-5 mb-5{% endif %}">
         
-        <div class="row justify-content-center mb-4">
-            <div class="col-md-6">
-                <form method="POST" action="/" class="d-flex shadow">
-                    <input type="text" name="riot_id" class="form-control me-2 bg-dark text-light border-secondary arama-kutusu" placeholder="Örn: KullaniciAdi#Etiket" required>
-                    <button type="submit" class="btn btn-warning fw-bold">Sorgula</button>
+        <h1 class="text-center {% if not match_data %}buyuk-baslik{% else %}kucuk-baslik{% endif %}">
+            <a href="/" class="brand-logo fw-bold">Elo Dayı</a>
+        </h1>
+        
+        <div class="row justify-content-center w-100 {% if match_data %}mb-4{% endif %}">
+            <div class="col-md-6" style="max-width: 650px;">
+                <form method="POST" action="/" class="d-flex shadow-lg rounded" onsubmit="startSearchAnim()">
+                    <input type="text" name="riot_id" class="form-control me-2 glass-panel text-light py-2 px-3 arama-kutusu" placeholder="Örn: KullaniciAdi#Etiket" required>
+                    <button type="submit" id="searchBtn" class="btn btn-sweet-blue fw-bold px-4" style="border-radius: 6px; min-width: 120px;">Sorgula</button>
                 </form>
+
+                {% if error %}
+                <div class="alert alert-danger text-center shadow w-100 mt-4 glass-panel border-danger text-light">{{ error }}</div>
+                {% endif %}
+
+                {% if warning %}
+                <div class="alert alert-info text-center shadow fw-bold w-100 mt-4 glass-panel border-sweet-blue text-sweet-blue">{{ warning }}</div>
+                {% endif %}
             </div>
         </div>
-
-        {% if error %}
-        <div class="alert alert-danger text-center shadow">{{ error }}</div>
-        {% endif %}
-
-        {% if warning %}
-        <div class="alert alert-warning text-center shadow fw-bold">{{ warning }}</div>
-        {% endif %}
 
         {% if match_data %}
-        <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-dark rounded shadow border border-secondary">
-            <h5 class="m-0 text-light">Aranan: <span class="text-warning fw-bold">{{ aranan_kisi }}</span> | Mod: <span class="text-info">{{ match_data.gameMode }}</span></h5>
-            
-            <form method="POST" action="/">
-                <input type="hidden" name="riot_id" value="{{ aranan_kisi }}">
-                <input type="hidden" name="force_update" value="true">
-                <button type="submit" class="btn btn-sm btn-outline-info fw-bold">Verileri Güncelle</button>
-            </form>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-6">
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-primary">
-                    <h4 class="text-primary m-0 fw-bold">Mavi Takım</h4>
-                    {% if match_data.bans.blue %}
-                    <div class="ban-container">
-                        <span class="ban-text">Banlar:</span>
-                        {% for ban_icon in match_data.bans.blue %}
-                            <img src="{{ ban_icon }}" class="ban-icon" title="Yasaklandı">
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-
-                {% for oyuncu in match_data.blue_team %}
-                <div class="oyuncu-kart mavi-takim d-flex align-items-center shadow-sm">
-                    <img src="{{ oyuncu.ikon }}" alt="{{ oyuncu.sampiyon }}" class="champ-icon me-2">
-                    <div class="d-flex flex-column me-1">
-                        <img src="{{ oyuncu.spell1 }}" class="spell-icon mb-1" title="Büyü 1">
-                        <img src="{{ oyuncu.spell2 }}" class="spell-icon" title="Büyü 2">
-                    </div>
-                    <div class="d-flex flex-column me-3">
-                        <img src="{{ oyuncu.main_rune }}" class="rune-icon mb-1" title="Ana Rün">
-                        <img src="{{ oyuncu.sub_tree }}" class="rune-icon" title="Alt Ağaç">
-                    </div>
-                    <div class="ms-2">
-                        <div class="oyuncu-isim">{{ oyuncu.isim }}</div>
-                        <div class="sampiyon-isim d-flex align-items-center">
-                            {{ oyuncu.sampiyon }} 
-                            <span class="mastery-badge">⭐ {{ oyuncu.mastery }}</span>
-                        </div>
-                        <div class="d-flex align-items-center mt-1">
-                            {% if oyuncu.rank.icon %}
-                            <img src="{{ oyuncu.rank.icon }}" alt="{{ oyuncu.rank.color_class }}" class="rank-icon me-1">
-                            {% endif %}
-                            <div class="rank-text rank-{{ oyuncu.rank.color_class }}">{{ oyuncu.rank.text }}</div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+        <div class="w-100 animate-in">
+            <div class="d-flex justify-content-between align-items-center mb-4 p-3 glass-panel rounded shadow">
+                <h5 class="m-0 text-light">Aranan: <span class="text-sweet-blue fw-bold">{{ aranan_kisi }}</span> | Mod: <span class="text-info">{{ match_data.gameMode }}</span></h5>
+                
+                <form method="POST" action="/">
+                    <input type="hidden" name="riot_id" value="{{ aranan_kisi }}">
+                    <input type="hidden" name="force_update" value="true">
+                    <button type="submit" class="btn btn-sm btn-outline-sweet-blue fw-bold">Verileri Güncelle</button>
+                </form>
             </div>
-
-            <div class="col-md-6">
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-danger">
-                    <h4 class="text-danger m-0 fw-bold">Kırmızı Takım</h4>
-                    {% if match_data.bans.red %}
-                    <div class="ban-container">
-                        <span class="ban-text">Banlar:</span>
-                        {% for ban_icon in match_data.bans.red %}
-                            <img src="{{ ban_icon }}" class="ban-icon" title="Yasaklandı">
-                        {% endfor %}
+            
+            <div class="row m-0">
+                <div class="col-md-6 px-2 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-primary">
+                        <h4 class="text-primary m-0 fw-bold" style="text-shadow: 0 2px 5px rgba(0,0,0,0.5);">Mavi Takım</h4>
+                        {% if match_data.bans.blue %}
+                        <div class="ban-container glass-panel px-2 py-1 rounded-pill">
+                            <span class="ban-text">Banlar:</span>
+                            {% for ban_icon in match_data.bans.blue %}
+                                <img src="{{ ban_icon }}" class="ban-icon" title="Yasaklandı">
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
+
+                    {% for oyuncu in match_data.blue_team %}
+                    <div class="oyuncu-kart mavi-takim d-flex align-items-center shadow-sm position-relative">
+                        <img src="{{ oyuncu.ikon }}" alt="{{ oyuncu.sampiyon }}" class="champ-icon me-2 shadow">
+                        <div class="d-flex flex-column me-1">
+                            <img src="{{ oyuncu.spell1 }}" class="spell-icon mb-1 shadow-sm" title="Büyü 1">
+                            <img src="{{ oyuncu.spell2 }}" class="spell-icon shadow-sm" title="Büyü 2">
+                        </div>
+                        <div class="d-flex flex-column me-3">
+                            <img src="{{ oyuncu.main_rune }}" class="rune-icon mb-1 shadow-sm" title="Ana Rün">
+                            <img src="{{ oyuncu.sub_tree }}" class="rune-icon shadow-sm" title="Alt Ağaç">
+                        </div>
+                        
+                        <div class="ms-1 flex-grow-1">
+                            <div class="oyuncu-isim">{{ oyuncu.isim }}</div>
+                            <div class="sampiyon-isim d-flex align-items-center">
+                                {{ oyuncu.sampiyon }} 
+                                <span class="mastery-badge">⭐ {{ oyuncu.mastery }}</span>
+                                {% if oyuncu.hot_streak %}
+                                <span class="hot-streak" title="Alev Almış! Seri galibiyette.">🔥</span>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex align-items-center mb-1">
+                                {% if oyuncu.rank.icon %}
+                                <img src="{{ oyuncu.rank.icon }}" alt="{{ oyuncu.rank.color_class }}" class="rank-icon me-1">
+                                {% endif %}
+                                <div class="rank-text rank-{{ oyuncu.rank.color_class }}">{{ oyuncu.rank.text }}</div>
+                            </div>
+                            
+                            <div id="kda-container-{{ oyuncu.puuid }}">
+                                <button class="btn btn-sm btn-outline-sweet-blue rounded-pill" onclick="fetchKDA('{{ oyuncu.puuid }}', this)" style="font-size:0.7rem; padding: 2px 8px;">🔍 Dayı'ya Sor (Son 3 Maç)</button>
+                            </div>
+                        </div>
+
+                        <div class="ms-auto d-flex flex-wrap justify-content-end align-items-center gap-1 pe-1" style="max-width: 140px;">
+                            {% for tag in oyuncu.tags %}
+                            <span class="badge {{ tag.class }} shadow-sm" title="{{ tag.tip }}" style="cursor:help; font-size: 0.65rem; padding: 4px 6px;">{{ tag.text }}</span>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    {% endfor %}
                 </div>
 
-                {% for oyuncu in match_data.red_team %}
-                <div class="oyuncu-kart kirmizi-takim d-flex align-items-center shadow-sm">
-                    <img src="{{ oyuncu.ikon }}" alt="{{ oyuncu.sampiyon }}" class="champ-icon me-2">
-                    <div class="d-flex flex-column me-1">
-                        <img src="{{ oyuncu.spell1 }}" class="spell-icon mb-1" title="Büyü 1">
-                        <img src="{{ oyuncu.spell2 }}" class="spell-icon" title="Büyü 2">
-                    </div>
-                    <div class="d-flex flex-column me-3">
-                        <img src="{{ oyuncu.main_rune }}" class="rune-icon mb-1" title="Ana Rün">
-                        <img src="{{ oyuncu.sub_tree }}" class="rune-icon" title="Alt Ağaç">
-                    </div>
-                    <div class="ms-2">
-                        <div class="oyuncu-isim">{{ oyuncu.isim }}</div>
-                        <div class="sampiyon-isim d-flex align-items-center">
-                            {{ oyuncu.sampiyon }} 
-                            <span class="mastery-badge">⭐ {{ oyuncu.mastery }}</span>
+                <div class="col-md-6 px-2 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-danger">
+                        <h4 class="text-danger m-0 fw-bold" style="text-shadow: 0 2px 5px rgba(0,0,0,0.5);">Kırmızı Takım</h4>
+                        {% if match_data.bans.red %}
+                        <div class="ban-container glass-panel px-2 py-1 rounded-pill">
+                            <span class="ban-text">Banlar:</span>
+                            {% for ban_icon in match_data.bans.red %}
+                                <img src="{{ ban_icon }}" class="ban-icon" title="Yasaklandı">
+                            {% endfor %}
                         </div>
-                        <div class="d-flex align-items-center mt-1">
-                            {% if oyuncu.rank.icon %}
-                            <img src="{{ oyuncu.rank.icon }}" alt="{{ oyuncu.rank.color_class }}" class="rank-icon me-1">
-                            {% endif %}
-                            <div class="rank-text rank-{{ oyuncu.rank.color_class }}">{{ oyuncu.rank.text }}</div>
-                        </div>
+                        {% endif %}
                     </div>
+
+                    {% for oyuncu in match_data.red_team %}
+                    <div class="oyuncu-kart kirmizi-takim d-flex align-items-center shadow-sm position-relative">
+                        <img src="{{ oyuncu.ikon }}" alt="{{ oyuncu.sampiyon }}" class="champ-icon me-2 shadow">
+                        <div class="d-flex flex-column me-1">
+                            <img src="{{ oyuncu.spell1 }}" class="spell-icon mb-1 shadow-sm" title="Büyü 1">
+                            <img src="{{ oyuncu.spell2 }}" class="spell-icon shadow-sm" title="Büyü 2">
+                        </div>
+                        <div class="d-flex flex-column me-3">
+                            <img src="{{ oyuncu.main_rune }}" class="rune-icon mb-1 shadow-sm" title="Ana Rün">
+                            <img src="{{ oyuncu.sub_tree }}" class="rune-icon shadow-sm" title="Alt Ağaç">
+                        </div>
+                        
+                        <div class="ms-1 flex-grow-1">
+                            <div class="oyuncu-isim">{{ oyuncu.isim }}</div>
+                            <div class="sampiyon-isim d-flex align-items-center">
+                                {{ oyuncu.sampiyon }} 
+                                <span class="mastery-badge">⭐ {{ oyuncu.mastery }}</span>
+                                {% if oyuncu.hot_streak %}
+                                <span class="hot-streak" title="Alev Almış! Seri galibiyette.">🔥</span>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex align-items-center mb-1">
+                                {% if oyuncu.rank.icon %}
+                                <img src="{{ oyuncu.rank.icon }}" alt="{{ oyuncu.rank.color_class }}" class="rank-icon me-1">
+                                {% endif %}
+                                <div class="rank-text rank-{{ oyuncu.rank.color_class }}">{{ oyuncu.rank.text }}</div>
+                            </div>
+                            
+                            <div id="kda-container-{{ oyuncu.puuid }}">
+                                <button class="btn btn-sm btn-outline-sweet-blue rounded-pill" onclick="fetchKDA('{{ oyuncu.puuid }}', this)" style="font-size:0.7rem; padding: 2px 8px;">🔍 Dayı'ya Sor (Son 3 Maç)</button>
+                            </div>
+                        </div>
+
+                        <div class="ms-auto d-flex flex-wrap justify-content-end align-items-center gap-1 pe-1" style="max-width: 140px;">
+                            {% for tag in oyuncu.tags %}
+                            <span class="badge {{ tag.class }} shadow-sm" title="{{ tag.tip }}" style="cursor:help; font-size: 0.65rem; padding: 4px 6px;">{{ tag.text }}</span>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </div>
         {% endif %}
     </div>
 
-    <footer class="py-4 text-center mt-auto" style="background-color: #0a0a0a; border-top: 1px solid #2a2a2a;">
+    <footer class="py-4 text-center mt-auto" style="background-color: rgba(10, 10, 10, 0.9); border-top: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 10; backdrop-filter: blur(5px);">
         <div class="container">
             <p class="small mb-3" style="color: #9aa0a6;">
-                "Elo Dayı" isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
+                © Copyright elodayi.gg. All rights reserved. elodayi.gg isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing League of Legends. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc. League of Legends © Riot Games, Inc.
             </p>
             <ul class="list-inline mb-0 small">
-                <li class="list-inline-item"><a href="#" class="footer-link" style="color: #adb5bd; text-decoration: none;">Privacy Policy</a></li>
+                <li class="list-inline-item"><a href="/privacy" class="footer-link">Privacy Policy</a></li>
                 <li class="list-inline-item mx-2" style="color: #555;">|</li>
-                <li class="list-inline-item"><a href="#" class="footer-link" style="color: #adb5bd; text-decoration: none;">Terms of Use</a></li>
+                <li class="list-inline-item"><a href="/terms" class="footer-link">Terms of Use</a></li>
             </ul>
         </div>
     </footer>
+
+    <script>
+        function startSearchAnim() {
+            document.getElementById('bg-layer').classList.add('bg-darken');
+            let btn = document.getElementById('searchBtn');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Aranıyor...';
+            btn.style.opacity = '0.8';
+        }
+
+        let kdaClicks = 0;
+        const MAX_KDA_CLICKS = 3;
+
+        function fetchKDA(puuid, btn) {
+            if (kdaClicks >= MAX_KDA_CLICKS) {
+                alert("Dayı yoruldu! API limitini korumak için bir aramada en fazla 3 kişinin KDA'sına bakabilirsin.");
+                return;
+            }
+            kdaClicks++;
+
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Dayı Arıyor...';
+            btn.disabled = true;
+
+            fetch('/api/kda/' + puuid)
+                .then(response => response.json())
+                .then(data => {
+                    if(data.error) {
+                        btn.innerHTML = '❌ ' + data.error;
+                        btn.classList.replace('btn-outline-sweet-blue', 'btn-outline-danger');
+                    } else {
+                        let container = document.getElementById('kda-container-' + puuid);
+                        container.innerHTML = `<span class="badge glass-panel border border-sweet-blue p-2 text-sweet-blue shadow-sm" style="font-size:0.75rem; letter-spacing: 0.5px;">Son ${data.matches} Maç KDA: ${data.kda}</span>`;
+                    }
+                })
+                .catch(err => {
+                    btn.innerHTML = '❌ Sunucu Hatası';
+                    btn.classList.replace('btn-outline-sweet-blue', 'btn-outline-danger');
+                });
+        }
+    </script>
 </body>
 </html>
