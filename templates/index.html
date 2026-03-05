@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elo Dayı - LoL Canlı Maç Sorgulama</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #121212; color: #f0f0f0; display: flex; flex-direction: column; min-height: 100vh; }
+        .main-content { flex: 1; }
+        
+        .mavi-takim { background-color: #162436; border-left: 5px solid #2980b9; }
+        .kirmizi-takim { background-color: #361616; border-left: 5px solid #c0392b; }
+        
+        .oyuncu-kart { margin-bottom: 8px; padding: 10px 15px; border-radius: 6px; transition: 0.2s; border: 1px solid #2a2a2a; }
+        .oyuncu-kart:hover { transform: translateX(5px); background-color: #1e1e1e; }
+        
+        .champ-icon { width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #555; }
+        .spell-icon { width: 22px; height: 22px; border-radius: 3px; }
+        .rune-icon { width: 22px; height: 22px; background-color: #000; border-radius: 50%; padding: 2px; }
+        .rank-icon { width: 26px; height: 26px; object-fit: contain; }
+        
+        .ban-container { display: flex; align-items: center; }
+        .ban-icon { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid #e74c3c; margin-left: -8px; opacity: 0.8; transition: 0.2s; }
+        .ban-icon:hover { opacity: 1; transform: scale(1.2); z-index: 10; }
+        .ban-text { font-size: 0.8em; color: #e74c3c; margin-right: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+
+        .oyuncu-isim { font-size: 1.05em; color: #ffffff; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+        .sampiyon-isim { font-size: 0.95em; color: #b0b8c1; font-weight: 500; margin-bottom: 3px; letter-spacing: 0.5px;}
+
+        /* --- İŞTE BURASI: ARAMA KUTUSU YAZISINI DAHA BELİRGİN VE SİLİK BEYAZ YAPAN KOD --- */
+        .arama-kutusu::placeholder {
+            color: #b0b8c1 !important; 
+            opacity: 0.6 !important;
+            font-style: italic;
+        }
+        
+        .rank-iron { color: #7f8c8d !important; }
+        .rank-bronze { color: #cd7f32 !important; }
+        .rank-silver { color: #bdc3c7 !important; }
+        .rank-gold { color: #f1c40f !important; text-shadow: 0 0 5px rgba(241,196,15,0.3); }
+        .rank-platinum { color: #1abc9c !important; }
+        .rank-emerald { color: #2ecc71 !important; text-shadow: 0 0 5px rgba(46,204,113,0.3); }
+        .rank-diamond { color: #3498db !important; }
+        .rank-master { color: #9b59b6 !important; }
+        .rank-grandmaster { color: #e74c3c !important; }
+        .rank-challenger { color: #f39c12 !important; }
+        .rank-unranked { color: #7f8c8d !important; font-style: italic; }
+        .rank-text { font-size: 0.9em; font-weight: 600; }
+
+        footer { background-color: #0a0a0a; border-top: 1px solid #2a2a2a; }
+        .footer-link { color: #adb5bd; text-decoration: none; transition: color 0.2s; }
+        .footer-link:hover { color: #f1c40f; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5 mb-5 main-content">
+        <h1 class="text-center mb-4 text-warning fw-bold">Elo Dayı</h1>
+        
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-6">
+                <form method="POST" action="/" class="d-flex shadow">
+                    <input type="text" name="riot_id" class="form-control me-2 bg-dark text-light border-secondary arama-kutusu" placeholder="Örn: KullaniciAdi#Etiket" required>
+                    <button type="submit" class="btn btn-warning fw-bold">Sorgula</button>
+                </form>
+            </div>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger text-center shadow">{{ error }}</div>
+        {% endif %}
+
+        {% if warning %}
+        <div class="alert alert-warning text-center shadow fw-bold">{{ warning }}</div>
+        {% endif %}
+
+        {% if match_data %}
+        <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-dark rounded shadow border border-secondary">
+            <h5 class="m-0 text-light">Aranan: <span class="text-warning fw-bold">{{ aranan_kisi }}</span> | Mod: <span class="text-info">{{ match_data.gameMode }}</span></h5>
+            
+            <form method="POST" action="/">
+                <input type="hidden" name="riot_id" value="{{ aranan_kisi }}">
+                <input type="hidden" name="force_update" value="true">
+                <button type="submit" class="btn btn-sm btn-outline-info fw-bold">Verileri Güncelle</button>
+            </form>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-primary">
+                    <h4 class="text-primary m-0 fw-bold">Mavi Takım</h4>
+                    {% if match_data.bans.blue %}
+                    <div class="ban-container">
+                        <span class="ban-text">Banlar:</span>
+                        {% for ban_icon in match_data.bans.blue %}
+                            <img src="{{ ban_icon }}" class="ban-icon" title="Yasaklandı">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% for oyuncu in match_data.blue_team %}
+                <div class="oyuncu-kart mavi-takim d-flex align-items-center shadow-sm">
+                    <img src="{{ oyuncu.ikon }}" alt="{{ oyuncu.sampiyon }}" class="champ-icon me-2">
+                    <div class="d-flex flex-column me-1">
+                        <img src="{{ oyuncu.spell1 }}" class="spell-icon mb-1" title="Büyü 1">
+                        <img src="{{ oyuncu.spell2 }}" class="spell-icon" title="Büyü 2">
+                    </div>
+                    <div class="d-flex flex-column me-3">
+                        <img src="{{ oyuncu.main_rune }}" class="rune-icon mb-1" title="Ana Rün">
+                        <img src="{{ oyuncu.sub_tree }}" class="rune-icon" title="Alt Ağaç">
+                    </div>
+                    <div class="ms-2">
+                        <div class="oyuncu-isim">{{ oyuncu.isim }}</div>
+                        <div class="sampiyon-isim">{{ oyuncu.sampiyon }}</div>
+                        <div class="d-flex align-items-center mt-1">
+                            {% if oyuncu.rank.icon %}
+                            <img src="{{ oyuncu.rank.icon }}" alt="{{ oyuncu.rank.color_class }}" class="rank-icon me-1">
+                            {% endif %}
+                            <div class="rank-text rank-{{ oyuncu.rank.color_class }}">{{ oyuncu.rank.text }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-danger">
+                    <h4 class="text-danger m-0 fw-bold">Kırmızı Takım</h4>
+                    {% if match_data.bans.red %}
+                    <div class="ban-container">
+                        <span class="ban-text">Banlar:</span>
+                        {% for ban_icon in match_data.bans.red %}
+                            <img src="{{ ban_icon }}" class="ban-icon" title="Yasaklandı">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% for oyuncu in match_data.red_team %}
+                <div class="oyuncu-kart kirmizi-takim d-flex align-items-center shadow-sm">
+                    <img src="{{ oyuncu.ikon }}" alt="{{ oyuncu.sampiyon }}" class="champ-icon me-2">
+                    <div class="d-flex flex-column me-1">
+                        <img src="{{ oyuncu.spell1 }}" class="spell-icon mb-1" title="Büyü 1">
+                        <img src="{{ oyuncu.spell2 }}" class="spell-icon" title="Büyü 2">
+                    </div>
+                    <div class="d-flex flex-column me-3">
+                        <img src="{{ oyuncu.main_rune }}" class="rune-icon mb-1" title="Ana Rün">
+                        <img src="{{ oyuncu.sub_tree }}" class="rune-icon" title="Alt Ağaç">
+                    </div>
+                    <div class="ms-2">
+                        <div class="oyuncu-isim">{{ oyuncu.isim }}</div>
+                        <div class="sampiyon-isim">{{ oyuncu.sampiyon }}</div>
+                        <div class="d-flex align-items-center mt-1">
+                            {% if oyuncu.rank.icon %}
+                            <img src="{{ oyuncu.rank.icon }}" alt="{{ oyuncu.rank.color_class }}" class="rank-icon me-1">
+                            {% endif %}
+                            <div class="rank-text rank-{{ oyuncu.rank.color_class }}">{{ oyuncu.rank.text }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="py-4 text-center mt-auto" style="background-color: #0a0a0a; border-top: 1px solid #2a2a2a;">
+        <div class="container">
+            <p class="small mb-3" style="color: #9aa0a6;">
+                "Elo Dayı" isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
+            </p>
+            <ul class="list-inline mb-0 small">
+                <li class="list-inline-item"><a href="#" class="footer-link" style="color: #adb5bd; text-decoration: none;">Privacy Policy</a></li>
+                <li class="list-inline-item mx-2" style="color: #555;">|</li>
+                <li class="list-inline-item"><a href="#" class="footer-link" style="color: #adb5bd; text-decoration: none;">Terms of Use</a></li>
+            </ul>
+        </div>
+    </footer>
+</body>
+</html>
